@@ -1,0 +1,297 @@
+Assignment 1 
+
+DATASET ACTIVATE DataSet1.
+USE ALL.
+FILTER BY Age_New.
+EXECUTE.
+
+RECODE age (1 thru 50=1) (ELSE=0) INTO Age_New.
+EXECUTE.
+
+FREQUENCIES VARIABLES=Age_New
+  /ORDER=ANALYSIS.
+
+RECODE sex ('male'=1) ('female'=0) INTO gender.
+VARIABLE LABELS  gender 'gender'.
+EXECUTE.
+
+FREQUENCIES VARIABLES=gender
+  /ORDER=ANALYSIS.
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS CI(95) BCOV R ANOVA COLLIN TOL
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT pain
+  /METHOD=ENTER age gender
+  /METHOD=ENTER age gender STAI_trait pain_cat mindfulness cortisol_serum cortisol_saliva
+  /SCATTERPLOT=(*ZRESID ,*ZPRED)
+  /RESIDUALS NORMPROB(ZRESID)
+  /SAVE PRED COOK RESID.
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS CI(95) BCOV R ANOVA COLLIN TOL SELECTION
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT pain
+  /METHOD=ENTER age gender
+  /METHOD=ENTER age gender STAI_trait pain_cat mindfulness cortisol_serum
+  /SCATTERPLOT=(*ZRESID ,*ZPRED)
+  /RESIDUALS NORMPROB(ZRESID)
+  /SAVE PRED COOK RESID.
+
+
+EXAMINE VARIABLES=RES_1
+  /PLOT BOXPLOT STEMLEAF HISTOGRAM NPPLOT
+  /COMPARE GROUPS
+  /STATISTICS DESCRIPTIVES
+  /CINTERVAL 95
+  /MISSING LISTWISE
+  /NOTOTAL.
+
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=STAI_trait WITH pain
+  /MISSING=LISTWISE.
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=pain_cat WITH pain
+  /MISSING=LISTWISE.
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=cortisol_serum WITH pain
+  /MISSING=LISTWISE.
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=mindfulness WITH pain
+  /MISSING=LISTWISE.
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=gender WITH pain
+  /MISSING=LISTWISE.
+
+USE ALL.
+FILTER BY Age_New.
+EXECUTE.
+
+GRAPH
+  /SCATTERPLOT(BIVAR)=age WITH pain
+  /MISSING=LISTWISE.
+
+COMPUTE Res_new=RES_1 * RES_1.
+EXECUTE.
+
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS BCOV R ANOVA COLLIN TOL 
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT Res_new
+  /METHOD=ENTER gender age STAI_trait pain_cat cortisol_serum mindfulness
+  /SCATTERPLOT=(*ZRESID ,*ZPRED)
+  /RESIDUALS NORMPROB(ZRESID)
+  /SAVE COOK.
+  
+  
+  
+  
+  
+  
+  Assignment 2 - Backwards regression
+  
+  DATASET ACTIVATE DataSet1.
+USE ALL.
+FILTER BY Age_New.
+EXECUTE.
+
+RECODE age (1 thru 50=1) (ELSE=0) INTO Age_New.
+EXECUTE.
+
+FREQUENCIES VARIABLES=Age_New
+  /ORDER=ANALYSIS.
+
+RECODE sex ('male'=1) ('female'=0) INTO gender.
+VARIABLE LABELS  gender 'gender'.
+EXECUTE.
+
+FREQUENCIES VARIABLES=gender
+  /ORDER=ANALYSIS.
+
+
+DATASET ACTIVATE DataSet1.
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS CI(95) R ANOVA CHANGE SELECTION
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT pain
+  /METHOD=BACKWARD gender age STAI_trait pain_cat cortisol_serum mindfulness weight.
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS CI(95) R ANOVA COLLIN TOL CHANGE SELECTION
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT pain
+  /METHOD=ENTER gender age pain_cat cortisol_serum mindfulness
+  /SAVE PRED RESID.
+  
+  
+  
+  
+  
+  Assignment 2 - Theory based regression
+  
+  
+DATASET ACTIVATE DataSet1.
+USE ALL.
+FILTER BY Age_New.
+EXECUTE.
+
+RECODE age (1 thru 50=1) (ELSE=0) INTO Age_New.
+EXECUTE.
+
+FREQUENCIES VARIABLES=Age_New
+  /ORDER=ANALYSIS.
+
+RECODE sex ('male'=1) ('female'=0) INTO gender.
+VARIABLE LABELS  gender 'gender'.
+EXECUTE.
+
+FREQUENCIES VARIABLES=gender
+  /ORDER=ANALYSIS.
+
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS CI(95) BCOV R ANOVA COLLIN TOL SELECTION 
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN 
+  /DEPENDENT pain
+  /METHOD=ENTER age gender STAI_trait pain_cat mindfulness cortisol_serum.
+
+COMPUTE Res_new=RES_1 * RES_1.
+EXECUTE.
+
+
+
+
+
+ Assignment 2 - Data set 2
+ 
+ DATASET ACTIVATE DataSet1.
+RECODE sex ('male'=0) ('female'=1) INTO Gender_new.
+VARIABLE LABELS  Gender_new 'Gender_new'.
+EXECUTE.
+
+
+DATASET ACTIVATE DataSet1.
+DESCRIPTIVES VARIABLES=Gender_new
+  /STATISTICS=MEAN STDDEV MIN MAX.
+
+
+DATASET ACTIVATE DataSet1.
+COMPUTE pred_pain_back_new=4.606+ Gender_new*.309+ age*(-.075)+ pain_cat*.066+ cortisol_serum*.411+ 
+    mindfulness*(-.290) .
+EXECUTE.
+
+COMPUTE pain_res_back_new=pain-pred_pain_back_new.
+EXECUTE.
+
+COMPUTE pain_res_back_sq_new=pain_res_back_new * pain_res_back_new.
+EXECUTE.
+
+
+DESCRIPTIVES VARIABLES=pain_res_back_sq_new
+  /STATISTICS=MEAN SUM STDDEV MIN MAX.
+
+
+COMPUTE pred_pain_theory_new=4.436+age*(-.079)+Gender_new*.326+STAI_trait*.017+pain_cat*.057+
+    mindfulness* (-.282)+cortisol_serum*.392 .
+EXECUTE.
+
+COMPUTE pain_res_theory_new=pain - pred_pain_theory_new.
+EXECUTE.
+
+COMPUTE pain_res_theory_sq_new=pain_res_theory_new * pain_res_theory_new.
+EXECUTE.
+
+DESCRIPTIVES VARIABLES=pain_res_back_sq_new pain_res_theory_sq_new
+  /STATISTICS=MEAN SUM STDDEV MIN MAX.
+  
+  
+  
+  
+  
+ Assignment 3 - Data set 3
+ 
+ DATASET ACTIVATE DataSet1.
+RECODE sex ('male'=1) ('female'=0) INTO gender_ref_male.
+VARIABLE LABELS  gender_ref_male 'gender_ref_male'.
+EXECUTE.
+
+
+
+DATASET ACTIVATE DataSet1.
+MIXED pain BY gender_ref_male WITH age STAI_trait pain_cat cortisol_serum mindfulness
+  /CRITERIA=CIN(95) MXITER(100) MXSTEP(10) SCORING(1) SINGULAR(0.000000000001) HCONVERGE(0, 
+    ABSOLUTE) LCONVERGE(0, ABSOLUTE) PCONVERGE(0.000001, ABSOLUTE)
+  /FIXED=gender_ref_male age STAI_trait pain_cat cortisol_serum mindfulness | SSTYPE(3)
+  /METHOD=REML
+  /PRINT=SOLUTION
+  /RANDOM=INTERCEPT | SUBJECT(hospital) COVTYPE(VC).
+
+
+
+DATASET ACTIVATE DataSet1.
+MIXED pain BY gender_ref_male WITH age STAI_trait pain_cat cortisol_serum mindfulness
+  /CRITERIA=CIN(95) MXITER(100) MXSTEP(10) SCORING(1) SINGULAR(0.000000000001) HCONVERGE(0, 
+    ABSOLUTE) LCONVERGE(0, ABSOLUTE) PCONVERGE(0.000001, ABSOLUTE)
+  /FIXED=gender_ref_male age STAI_trait pain_cat cortisol_serum mindfulness | SSTYPE(3)
+  /METHOD=REML
+  /PRINT=SOLUTION
+  /RANDOM=INTERCEPT | SUBJECT(hospital) COVTYPE(VC)
+  /SAVE=FIXPRED.
+
+
+DESCRIPTIVES VARIABLES=FXPRED_1
+  /STATISTICS=MEAN STDDEV VARIANCE MIN MAX.
+  
+  
+  
+  
+  
+Assignment 3 - Data set 4
+
+DATASET ACTIVATE DataSet1.
+RECODE sex ('male'=1) ('female'=0) INTO gender_ref_male.
+VARIABLE LABELS  gender_ref_male 'gender_ref_male'.
+EXECUTE
+
+COMPUTE Prediction=2.23 + age * -0.02 + STAI_trait * -0.01 + pain_cat * 0.08 + cortisol_serum * 0.53 + 
+    mindfulness * -0.23 + gender_ref_male * -0.38.
+EXECUTE.
+
+COMPUTE Pain_prediction_res=pain - Prediction.
+EXECUTE.
+
+COMPUTE residuals_sq=Pain_prediction_res * Pain_prediction_res.
+EXECUTE.
+
+DESCRIPTIVES VARIABLES=residuals_sq
+  /STATISTICS=MEAN SUM STDDEV MIN MAX.
+
+
+DATASET ACTIVATE DataSet1.
+DESCRIPTIVES VARIABLES=pain
+  /STATISTICS=MEAN STDDEV MIN MAX.
+
+
+COMPUTE TSS_value=(pain - 4.9) * (pain - 4.9).
+EXECUTE.
+
+DESCRIPTIVES VARIABLES=residuals_sq TSS_value
+  /STATISTICS=MEAN SUM STDDEV MIN MAX.
